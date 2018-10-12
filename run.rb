@@ -219,6 +219,7 @@ def set_CPT(prob,number)
     node_Name= assign[0].gsub(/\+/,'').gsub(/-/,'')
     Nodes.each do |n|                 #     This cycle will help us to find
       if n.get_Name == node_Name      #  the node we are trying to modify.
+        puts "Im now on node #{n.name}"
         if n.get_Parents == nil       #     Node has not been initialized.
           n.set_New_Node(assign[1])
         end
@@ -263,7 +264,9 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
       Nodes.each do |n|                 #This cycle will help us to find the node we are trying to modify
         if n.get_Name == node_Name      #To find the node given in the probability 'prob'
           #Get the antecesors of the node to be able to apply total probability
+          puts "Array without antecesors #{search[0]} on node #{n.get_Name}"
           n.get_antecesors(Array[search[0]]);
+          puts "Array with antecesors #{search[0]}"
           #Apply total probability for the nodes in search[0]
           num = totalProb(Array[search[0]], pdis); #[+G,-S] Need array conversion in case only 1 element exists
           return num/n.search_Prob(search[0][0],search[1]) #Obtain the probability of the division P(+G,-S)/P(+G)
