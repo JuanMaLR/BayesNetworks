@@ -4,8 +4,6 @@
 # ##########################################################################
 
 Nodes=[]
-sumnum = 0
-sumden = 0
 
 ############################################################################
 #                                Class Node                                #
@@ -120,7 +118,7 @@ class Node
           f = false
         end
       end
-      if f
+      if
         if sign=='+'
           @Prob[caso][0]=probability
           @Prob[caso][1]=1.0 -probability
@@ -134,9 +132,9 @@ class Node
     puts @name
   end
 
-
 def search_Prob(sign,parameters)
   if @parents.length > 1
+    @parents.as
     lookArray = Array.new(parameters.split(',').length)
     parameters.split(',').each do |par_name|
       parSign = par_name[0]
@@ -191,6 +189,25 @@ def search_Prob(sign,parameters)
   end
 end
 
+def get_antecesors(joins)
+  if @parents.length == 0
+    joins.push(@name)
+    return
+  end  
+  @parents.each do |n|
+    f = true
+    joins.each do |che|
+      if n.name == che
+        f = false
+      end
+      if f
+        n.get_antecesors(joins)
+      end
+    end
+    joins.push(@name)
+  end
+end
+
 end
 
 #####################################################################################
@@ -223,80 +240,56 @@ def set_CPT(prob,number)
   end
 end
 
-def get_Probability(prob)
-  if prob.include? '|'  #Is a given
-    search=prob.split('|')
-    sign=search[0][0]
-    node_Name= search[0].gsub(/\+/,'').gsub(/-/,'')
-    Nodes.each do |n|                 #     This cycle will help us to find
-      if n.get_Name == node_Name      #  the node we are trying to modify.
-        return n.search_Prob(sign,search[1])
+def get_Probability(prob) #In the form +G|-R,+S
+  if prob.include? '|'  #To check if we have a given
+    search = prob.split('|') #Obtain elements in an array of [[+G],[-R,+S]]
+    sign = search[0][0] #To obtain the sign of the node
+    node_Name = search[0].gsub(/\+/,'').gsub(/-/,'') #To remove any sign that can exist
+    joints = search[1].split(',')
+    if joints.length > 1
+      #Validate for more than 1 given
+      puts "Más de 1 joint en given"
+    else #I have it in the form +G|-S
+      Nodes.each do |n|                 #This cycle will help us to find the node we are trying to modify
+        if n.get_Name == node_Name      #To find the node given in the probability 'prob'
+          #Get the antecesors of the node to be able to apply total probability
+          get_antecesors(search[0]);
+          #Apply total probability for the nodes in search[0]
+          num = totalProb(search[0]);
+
+          return num/n.search_Prob(search[1][0],search[1]) #Obtain the probability of the division P(+G,-S)/P(+G)
+        end
       end
     end
-  else                  #Root
-    sign=prob[0][0]
-    node_Name= prob.gsub(/\+/,'').gsub(/-/,'')
-    Nodes.each do |n|
-      if n.get_Name == node_Name
-        return n.search_Prob(sign,"")
+  else  #Root
+    sign = prob[0][0] #To obtain the sign of the +G
+    node_Name= prob.gsub(/\+/,'').gsub(/-/,'') #Remove signs and leave G alone
+    Nodes.each do |n| #Obtain the node from the array
+      if n.get_Name == node_Name #If we have a match
+        return n.search_Prob(sign,"") #Return the probability of the root
       end
     end
   end
 end
 
-def ObtQuer(quer)
-  nums = []
-  #Imagine we obtain P(+Grass|-Sprinkler,+Rain)
-  if (quer.split('|').length > 1) #I have a conditional probability
-    #I split the left and right parts [[+Grass],[-Sprinkler,+Rain]]
-    node = quer.split('|')
-    #So I make my conditional probability definition using an array, always first element is joint and second is right side of node
-    #First validate if the second part of node is more than 1
-    if(node[1].split(',').length > 1)
-      #I now know that I have more than 1 element on the right of node
-      join = node[0] + ',' + node[1].join(',')
-      #I first validate that joint doesn't already includes all nodes in the network
-      if join.split(',').length <= numnode 
-        #If not I create my conditional probability model
-        #join is in the form [+Grass,-Sprinkler,+Rain]
-        #node[1] is in the form [-Sprinkler,+Rain]
-        CPText = [[join],[node[1]]]
-        #Loop to find the parents (atencesors to be used in the enumeration algorithm) of a node
-        FindParents(CPText, 0)
-        #Now I know what my antecesors are, so I start obtaining the names (probability distribution) of each of the nodes
-        FindPDF(sumnum)
+def totalProb(query)
+    sum = 0
+    query.each do |q| #Go trough the query nodes
+      n_n = q.gsub(/\+/,'').gsub(/-/,'') #Remove sign from parent node
+      Nodes.each do |n| #Go trough the nodes
+        if n_n == n.name #To find the node
+          if n.parents == nil
+            sum += n.search_Prob(q[0], n_n)
+          else
+            str = q + '|'
+            n.parents.each do |p|
+              str += p
+            end
+            num += n.search_Prob(q[0], str) #No funciona
+          end
+        end
       end
-      #Now I have the probability of the numerator, so we now found the denominator
-      #Find antecesors first
-      FindParents(CPText, 1)
-      #Find the probability distribution functions as a value sum
-      FindPDF(sumden)
-      #Divide the elements and return the probability of the query
-      return sumnum/sumden ######How to return?
     end
-  end
-end
-
-def FindPDF(sum)
-  Nodes.each do |x|
-    if(x.name ) #########Somehow obtain the PD of the node, not its name? And sum them
-      sum += x.
-  end 
-end
-
-def FindParents(CPText, frac)
-  CPText[frac].split(',').each do |x|
-    #To find the position of node with same name as CPText and use that to obtain the node
-    n = nodes[nodes.index(x)]
-    #I have the node of Grass, so now I add its parents if any to my array par
-    if n.parents != nill
-      #Then I do have parents and I add them
-      n.parents.each do |y|
-        #I add the parent name
-        CPText[frac].push(y.name)
-      end  
-    end
-  end
 end
 
 ############################################################################
@@ -325,9 +318,10 @@ probs.each do |line|
 end
 
 query.each do |line|
+  #Como validar si la probabilidad ya la tengo para regresarla directo
   puts get_Probability(line)
 end
 
 line = probs
-puts Nodes
+
 #puts "What you entered was #{info}" #Adds a new line (enter) to the text
