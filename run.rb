@@ -3,7 +3,7 @@
 #                             Global Variables                             #
 # ##########################################################################
 
-Nodes=[]
+Nodes=[] #Constant because of capital
 
 ############################################################################
 #                                Class Node                                #
@@ -25,8 +25,8 @@ class Node
   def initialize(name)
     @name = name
     @parents=nil
-    @ParMap=nil
-    @Prob=nil
+    @parMap=nil
+    @prob=nil
   end
 
   def get_Name()
@@ -43,17 +43,17 @@ class Node
 
   def set_New_Node(parameters)
     #Initialize mapping table
-    @ParMap= Array.new(2**parameters.split(',').length){Array.new(parameters.split(',').length)}
+    @parMap= Array.new(2**parameters.split(',').length){Array.new(parameters.split(',').length)}
     (2**(parameters.split(',').length)).times do |t|
       bin = '%0*b' % [parameters.split(',').length , t]
       parameters.split(',').length.times do |ite|
-        @ParMap[t][ite]=bin[ite]
+        @parMap[t][ite]=bin[ite]
       end
     end
 
     #Initialize probabilities table to nil
-    @Prob=Array.new(2**parameters.split(',').length){Array.new(2)}
-    @Prob.each {|p| p=nil}
+    @prob=Array.new(2**parameters.split(',').length){Array.new(2)}
+    @prob.each {|p| p=nil}
 
     #Assign parent nodes
     @parents=[]
@@ -108,33 +108,32 @@ class Node
       f=true
       if @parents.length > 1
           @parents.length.times do |i|
-          if @ParMap[caso][i].to_i != lookArray[i].to_i
+          if @parMap[caso][i].to_i != lookArray[i].to_i
             f = false
           end
         end
       end
       if @parents.length == 1
-        if @ParMap[caso][0].to_i != lookArray.to_i
+        if @parMap[caso][0].to_i != lookArray.to_i
           f = false
         end
       end
       if
         if sign=='+'
-          @Prob[caso][0]=probability
-          @Prob[caso][1]=1.0 -probability
+          @prob[caso][0]=probability
+          @prob[caso][1]=1.0 -probability
         else
-          @Prob[caso][0]=1.0 -probability
-          @Prob[caso][1]=probability
+          @prob[caso][0]=1.0 -probability
+          @prob[caso][1]=probability
         end
       end
     end
-    puts @Prob
-    puts @name
+    #puts @Prob
+    #puts @name
   end
 
 def search_Prob(sign,parameters)
   if @parents.length > 1
-    @parents.as
     lookArray = Array.new(parameters.split(',').length)
     parameters.split(',').each do |par_name|
       parSign = par_name[0]
@@ -169,21 +168,21 @@ def search_Prob(sign,parameters)
     f=true
     if @parents.length > 1
       @parents.length.times do |i|
-        if @ParMap[caso][i].to_i != lookArray[i].to_i
+        if @parMap[caso][i].to_i != lookArray[i].to_i
           f = false
         end
       end
     end
     if @parents.length == 1
-      if @ParMap[caso][0].to_i != lookArray.to_i
+      if @parMap[caso][0].to_i != lookArray.to_i
         f = false
       end
     end
     if f
       if sign=='+'
-        return @Prob[caso][0]
+        return @prob[caso][0]
       else
-        return @Prob[caso][1]
+        return @prob[caso][1]
       end
     end
   end
@@ -240,24 +239,34 @@ def set_CPT(prob,number)
   end
 end
 
-def get_Probability(prob) #In the form +G|-R,+S
+def get_Probability(prob, pdis) #In the form +G|-R,+S
   if prob.include? '|'  #To check if we have a given
     search = prob.split('|') #Obtain elements in an array of [[+G],[-R,+S]]
     sign = search[0][0] #To obtain the sign of the node
     node_Name = search[0].gsub(/\+/,'').gsub(/-/,'') #To remove any sign that can exist
     joints = search[1].split(',')
-    if joints.length > 1
-      #Validate for more than 1 given
-      puts "Más de 1 joint en given"
+    if joints.length > 1 #+G|-S,+R
+      joints.length.times do |j|
+        Nodes.each do |n|                 #This cycle will help us to find the node we are trying to modify
+          if n.get_Name == node_Name      #To find the node given in the probability 'prob'
+            #Get the antecesors of the node to be able to apply total probability
+            n.get_antecesors(search[0]);
+            #Apply total probability for the nodes in search[0]
+            num = totalProb(search[0], pdis); #[+G,-S,+R]
+            n.get_antecesors(search[1]);
+            denom = totalProb(search[1], pdis); #[-S,+R]
+            return num/denom #Obtain the probability of the division P(+G,-R,+S)/P(-R,+S)
+          end
+        end
+      end
     else #I have it in the form +G|-S
       Nodes.each do |n|                 #This cycle will help us to find the node we are trying to modify
         if n.get_Name == node_Name      #To find the node given in the probability 'prob'
           #Get the antecesors of the node to be able to apply total probability
-          get_antecesors(search[0]);
+          n.get_antecesors(Array[search[0]]);
           #Apply total probability for the nodes in search[0]
-          num = totalProb(search[0]);
-
-          return num/n.search_Prob(search[1][0],search[1]) #Obtain the probability of the division P(+G,-S)/P(+G)
+          num = totalProb(Array[search[0]], pdis); #[+G,-S] Need array conversion in case only 1 element exists
+          return num/n.search_Prob(search[0][0],search[1]) #Obtain the probability of the division P(+G,-S)/P(+G)
         end
       end
     end
@@ -272,33 +281,33 @@ def get_Probability(prob) #In the form +G|-R,+S
   end
 end
 
-def totalProb(query)
-    sum = 0
-    query.each do |q| #Go trough the query nodes
-      n_n = q.gsub(/\+/,'').gsub(/-/,'') #Remove sign from parent node
-      Nodes.each do |n| #Go trough the nodes
-        if n_n == n.name #To find the node
-          if n.parents == nil
-            sum += n.search_Prob(q[0], n_n)
-          else
-            str = q + '|'
-            n.parents.each do |p|
-              str += p
-            end
-            num += n.search_Prob(q[0], str) #No funciona
-          end
+def totalProb(query, pdis)#[+G,-S,+R]
+  sum = 0
+  query.each do |q| #Go trough the query nodes
+    #For +G
+    n_n = q.gsub(/\+/,'').gsub(/-/,'') #Remove sign from parent node
+    #G
+    Nodes.each do |n| #Go trough the nodes
+      if n_n == n.name #To find the node
+        if n.parents == nil
+          sum += n.search_Prob(q[0], "") #Probability of G
+        else
+          temp = pdis.dup
+          temp.reject!{|b| b.include?(n.name)}
+          sum += n.search_Prob(q[0], temp.join(",")) 
         end
       end
     end
+  end
+  sum
 end
 
 ############################################################################
 #                                Main program                              #
 # ##########################################################################
 
-Var_names = gets.chomp.gsub(/ /,'').split(',')
-Var_names.each {|i| Nodes.push Node.new(i)}
-numnode = Var_names.length
+var_names = gets.chomp.gsub(/ /,'').split(',')
+var_names.each {|i| Nodes.push Node.new(i)}
 
 numP = gets.chomp
 probs=[]
@@ -319,7 +328,8 @@ end
 
 query.each do |line|
   #Como validar si la probabilidad ya la tengo para regresarla directo
-  puts get_Probability(line)
+  pdis = line.gsub(/\|/, ',').split(',')
+  puts get_Probability(line, pdis)
 end
 
 line = probs
