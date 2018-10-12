@@ -1,11 +1,13 @@
-#print "Something to digest: " #Prints without a new line
+
+############################################################################
+#                             Global Variables                             #
+# ##########################################################################
 
 Nodes=[]
 
+
 ############################################################################
-#                                                                          #
-#                               Class Node                                 #
-#                                                                          #
+#                                Class Node                                #
 # ##########################################################################
 #                                                                          #
 #     The following class uses Nodes as a Global variable.                 #
@@ -17,6 +19,7 @@ Nodes=[]
 #     [column 0 means the prob that can happen while column 1 the opposite]#
 #                                                                          #
 ############################################################################
+
 class Node
   attr_reader :name, :parents, :ParMap, :Prob
 
@@ -35,13 +38,13 @@ class Node
     @parents
   end
 
-  #################################
-  #       Initialize a Node       #
-  #################################
-  def set_New_Node(parameters)
+                      #################################
+                      #       Initialize a Node       #
+                      #################################
 
+  def set_New_Node(parameters)
     #Initialize mapping table
-    @ParMap=Array.new(2**parameters.split(',').length){Array.new(parameters.split(',').length)}
+    @ParMap= Array.new(2**parameters.split(',').length){Array.new(parameters.split(',').length)}
     (2**(parameters.split(',').length)).times do |t|
       bin = '%0*b' % [parameters.split(',').length , t]
       parameters.split(',').length.times do |ite|
@@ -114,14 +117,14 @@ class Node
       if @parents.length == 1
         if @ParMap[caso][0].to_i != lookArray.to_i
           f = false
-          end
+        end
       end
       if f
         if sign=='+'
           @Prob[caso][0]=probability
-          @Prob[caso][1]=1-probability
+          @Prob[caso][1]=1.0 -probability
         else
-          @Prob[caso][0]=1-probability
+          @Prob[caso][0]=1.0 -probability
           @Prob[caso][1]=probability
         end
       end
@@ -129,6 +132,64 @@ class Node
     puts @Prob
     puts @name
   end
+
+
+def search_Prob(sign,parameters)
+  if @parents.length > 1
+    lookArray = Array.new(parameters.split(',').length)
+    parameters.split(',').each do |par_name|
+      parSign = par_name[0]
+      parName = par_name.gsub(/\+/,'').gsub(/-/,'')
+      Nodes.length.times do |nodePosition|
+        if Nodes[nodePosition].get_Name == parName
+          if parSign == '+'
+            lookArray[nodePosition] = 1;
+          else
+            lookArray[nodePosition] = 0;
+          end
+        end
+      end
+    end
+  end
+  if @parents.length == 1
+    parameters.split(',').each do |par_name|
+      parSign = par_name[0]
+      parName = par_name.gsub(/\+/,'').gsub(/-/,'')
+      Nodes.length.times do |nodePosition|
+        if Nodes[nodePosition].get_Name == parName
+          if parSign == '+'
+            lookArray= 1;
+          else
+            lookArray= 0;
+          end
+        end
+      end
+    end
+  end
+  (2**@parents.length).times  do |caso|
+    f=true
+    if @parents.length > 1
+      @parents.length.times do |i|
+        if @ParMap[caso][i].to_i != lookArray[i].to_i
+          f = false
+        end
+      end
+    end
+    if @parents.length == 1
+      if @ParMap[caso][0].to_i != lookArray.to_i
+        f = false
+      end
+    end
+    if f
+      if sign=='+'
+        return @Prob[caso][0]
+      else
+        return @Prob[caso][1]
+      end
+    end
+  end
+end
+
 end
 
 #####################################################################################
@@ -139,14 +200,12 @@ def set_CPT(prob,number)
     assign=prob.split('|')
     sign=assign[0][0]
     node_Name= assign[0].gsub(/\+/,'').gsub(/-/,'')
-    Nodes.each do |n|                 #   This cycle will help us to find the
-      if n.get_Name == node_Name      #the node we are trying to modify.
-
-        if n.get_Parents == nil #Node has not been initialized (so initialize it haha)
+    Nodes.each do |n|                 #     This cycle will help us to find
+      if n.get_Name == node_Name      #  the node we are trying to modify.
+        if n.get_Parents == nil       #     Node has not been initialized.
           n.set_New_Node(assign[1])
         end
         n.assign_Prob(sign,assign[1],number)
-
       end
     end
   else                  #Root
@@ -158,11 +217,36 @@ def set_CPT(prob,number)
           n.set_New_Node("")
         end
         n.assign_Prob(sign,"",number)
-
       end
     end
   end
 end
+
+def get_Probability(prob)
+  if prob.include? '|'  #Is a given
+    search=prob.split('|')
+    sign=search[0][0]
+    node_Name= search[0].gsub(/\+/,'').gsub(/-/,'')
+    Nodes.each do |n|                 #     This cycle will help us to find
+      if n.get_Name == node_Name      #  the node we are trying to modify.
+        return n.search_Prob(sign,search[1])
+      end
+    end
+  else                  #Root
+    sign=prob[0][0]
+    node_Name= prob.gsub(/\+/,'').gsub(/-/,'')
+    Nodes.each do |n|
+      if n.get_Name == node_Name
+        return n.search_Prob(sign,"")
+      end
+    end
+  end
+end
+
+
+############################################################################
+#                                Main program                              #
+# ##########################################################################
 
 Var_names = gets.chomp.gsub(/ /,'').split(',')
 Var_names.each {|i| Nodes.push Node.new(i)}
@@ -182,9 +266,11 @@ end
 probs.each do |line|
   auxL = line.gsub(/ /,'').split('=')
   set_CPT(auxL[0],auxL[1].to_f)
-
 end
 
+query.each do |line|
+  puts get_Probability(line)
+end
 
 line = probs
 #puts "What you entered was #{info}" #Adds a new line (enter) to the text
