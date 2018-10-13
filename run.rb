@@ -253,7 +253,7 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
             #Get the antecesors of the node to be able to apply total probability
             n.get_antecesors(Array[search[0]]);
             #Apply total probability for the nodes in search[0]
-            num = totalProb(search[0], pdis); #[+G,-S,+R]
+            num = totalProb(Array[search[0]], pdis); #[+G,-S,+R]
             n.get_antecesors(search[1]);
             denom = totalProb(search[1], pdis); #[-S,+R]
             return num/denom #Obtain the probability of the division P(+G,-R,+S)/P(-R,+S)
