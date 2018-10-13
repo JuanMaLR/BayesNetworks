@@ -251,7 +251,7 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
         Nodes.each do |n|                 #This cycle will help us to find the node we are trying to modify
           if n.get_Name == node_Name      #To find the node given in the probability 'prob'
             #Get the antecesors of the node to be able to apply total probability
-            n.get_antecesors(search[0]);
+            n.get_antecesors(Array[search[0]]);
             #Apply total probability for the nodes in search[0]
             num = totalProb(search[0], pdis); #[+G,-S,+R]
             n.get_antecesors(search[1]);
