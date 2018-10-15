@@ -188,29 +188,37 @@ def search_Prob(sign,parameters)
   end
 end
 
-def get_antecesors(joins)
-  if @parents.length == 0
-    joins.push(@name)
-    return
-  end  
-  @parents.each do |n|
-    f = true
-    joins.each do |che|
-      if n.name == che
-        f = false
-      end
-      if f
-        n.get_antecesors(joins)
-      end
-    end
-    joins.push(@name)
-  end
-end
-
 end
 
 #####################################################################################
 
+def get_antecesors(node_name, ret_arr)
+  Nodes.each do |n|
+    if n.get_Name == node_name
+      if n.get_Parents.length == 0
+        ret_arr.push(n.get_Name).uniq!
+        return
+      else
+        n.get_Parents.each do |n2|
+          f = true
+          if ret_arr.length > 0
+            ret_arr.each do |che|
+              if n2.get_Name == che
+                f = false
+              end
+              if f
+                get_antecesors(n2.get_Name, ret_arr)
+              end
+            end
+          else
+            get_antecesors(n2.get_Name, ret_arr)
+          end
+          ret_arr.push(node_name).uniq!
+        end
+      end
+    end
+  end
+end
 
 def set_CPT(prob,number)
   if prob.include? '|'  #Is a given
@@ -219,7 +227,7 @@ def set_CPT(prob,number)
     node_Name= assign[0].gsub(/\+/,'').gsub(/-/,'')
     Nodes.each do |n|                 #     This cycle will help us to find
       if n.get_Name == node_Name      #  the node we are trying to modify.
-        puts "Im now on node #{n.name}"
+        #puts "Im now on node #{n.name}"
         if n.get_Parents == nil       #     Node has not been initialized.
           n.set_New_Node(assign[1])
         end
@@ -245,32 +253,27 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
     search = prob.split('|') #Obtain elements in an array of [[+G],[-R,+S]]
     sign = search[0][0] #To obtain the sign of the node
     node_Name = search[0].gsub(/\+/,'').gsub(/-/,'') #To remove any sign that can exist
-    joints = search[1].split(',')
-    if joints.length > 1 #+G|-S,+R
-      joints.length.times do |j|
-        Nodes.each do |n|                 #This cycle will help us to find the node we are trying to modify
-          if n.get_Name == node_Name      #To find the node given in the probability 'prob'
-            #Get the antecesors of the node to be able to apply total probability
-            n.get_antecesors(Array[search[0]]);
-            #Apply total probability for the nodes in search[0]
-            num = totalProb(Array[search[0]], pdis); #[+G,-S,+R]
-            n.get_antecesors(Array[search[1]]);
-            denom = totalProb(Array[search[1]], pdis); #[-S,+R]
-            return num/denom #Obtain the probability of the division P(+G,-R,+S)/P(-R,+S)
-          end
-        end
-      end
-    else #I have it in the form +G|-S
-      Nodes.each do |n|                 #This cycle will help us to find the node we are trying to modify
-        if n.get_Name == node_Name      #To find the node given in the probability 'prob'
-          #Get the antecesors of the node to be able to apply total probability
-          puts "Array without antecesors #{search[0]} on node #{n.get_Name}"
-          n.get_antecesors(Array[search[0]]);
-          puts "Array with antecesors #{search[0]}"
-          #Apply total probability for the nodes in search[0]
-          num = totalProb(Array[search[0]], pdis); #[+G,-S] Need array conversion in case only 1 element exists
-          return num/n.search_Prob(search[0][0],search[1]) #Obtain the probability of the division P(+G,-S)/P(+G)
-        end
+    joints = search[1].gsub(/\+/,'').gsub(/-/,'').split(',')
+    antn = []
+    antd = []
+    Nodes.each do |n|                 #This cycle will help us to find the node we are trying to modify
+      if n.get_Name == node_Name      #To find the node given in the probability 'prob'
+        #puts "Estoy en el nodo: #{node_Name}"
+        #Get the antecesors of the node to be able to apply total probability
+        #puts "Sin antecesores: #{antn}"
+        get_antecesors(node_Name, antn);
+        #Apply total probability for the nodes in search[0]
+        #puts "Con antecesores: #{antn}"
+        puts "Numerator: "
+        num = totalProb(antn, pdis); #[+G,-S,+R]
+        #puts "Numerator is #{num}"
+        #puts "Sin antecesores: #{antd}"
+        get_antecesors(joints[0], antd);
+        #puts "Con antecesores: #{antd}"
+        puts "Denominator"
+        denom = totalProb(antd, pdis); #[-S,+R]
+        #puts "Denominator is #{denom}"
+        return num/denom #Obtain the probability of the division P(+G,-R,+S)/P(-R,+S)
       end
     end
   else  #Root
@@ -285,19 +288,20 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
 end
 
 def totalProb(query, pdis)#[+G,-S,+R]
-  sum = 0
+  puts "Query = #{query} and pdis = #{pdis}"
+  sum = 1
   query.each do |q| #Go trough the query nodes
-    #For +G
-    n_n = q.gsub(/\+/,'').gsub(/-/,'') #Remove sign from parent node
-    #G
     Nodes.each do |n| #Go trough the nodes
-      if n_n == n.name #To find the node
-        if n.parents == nil
-          sum += n.search_Prob(q[0], "") #Probability of G
+      if q == n.get_Name #To find the node
+        if n.get_Parents.length == 0
+          sum *= n.search_Prob(q[0], "")
         else
           temp = pdis.dup
-          temp.reject!{|b| b.include?(n.name)}
-          sum += n.search_Prob(q[0], temp.join(",")) 
+          puts "Nodo actual #{n.get_Name}"
+          puts "Arreglo actual = #{temp}"
+          temp.reject!{|b| b.include?(n.name)} #Delete the root node
+          puts "Arreglo nuevo = #{temp}"
+          sum *= n.search_Prob(q[0], temp.join(",")) 
         end
       end
     end
