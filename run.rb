@@ -20,7 +20,7 @@ Nodes=[] #Constant because of capital
 ############################################################################
 
 class Node
-  attr_reader :name, :parents, :ParMap, :Prob
+  attr_reader :name, :parents, :parMap, :prob
 
   def initialize(name)
     @name = name
@@ -334,7 +334,5 @@ query.each do |line|
   pdis = line.gsub(/\|/, ',').split(',')
   puts get_Probability(line, pdis)
 end
-
-line = probs
 
 #puts "What you entered was #{info}" #Adds a new line (enter) to the text
