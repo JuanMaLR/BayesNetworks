@@ -270,34 +270,39 @@ end
 def get_Probability(prob, pdis) #In the form +G|-R,+S
   if prob.include? '|'  #To check if we have a given
     search = prob.split('|') #Obtain elements in an array of [[+G],[-R,+S]]
-    sign = search[0][0] #To obtain the sign of the node
-    node_Name = search[0].gsub(/\+/,'').gsub(/-/,'') #To remove any sign that can exist
-    joints = search[1].gsub(/\+/,'').gsub(/-/,'').split(',')
-    antn = []
-    antd = []
-    Nodes.each do |n|                 #This cycle will help us to find the node we are trying to modify
-      if n.get_Name == node_Name      #To find the node given in the probability 'prob'
-        #puts "Estoy en el nodo: #{node_Name}"
-        #Get the antecesors of the node to be able to apply total probability
-        #puts "Sin antecesores: #{antn}"
-        get_antecesors(node_Name, antn)
-        #puts "La primera"
-        verify_Antecesors(node_Name, antn)
-        #Apply total probability for the nodes in search[0]
-        #puts "Con antecesores: #{antn}"
-        #puts "Numerator: "
-        num = totalProb(antn, pdis); #[+G,-S,+R]
-        #puts "Numerator is #{num}"
-        #puts "Sin antecesores: #{antd}"
-        get_antecesors(joints[0], antd)
-        #puts "La segunda"
-        verify_Antecesors(node_Name, antn)
-        #puts "Con antecesores: #{antd}"
-        #puts "Denominator"
-        denom = totalProb(antd, pdis); #[-S,+R]
-        #puts "Denominator is #{denom}"
-        #puts "Mi división me va a dar: numerador #{num} y denominador #{denom}"
-        return num/denom #Obtain the probability of the division P(+G,-R,+S)/P(-R,+S)
+    #Verify the # of elements in each side
+    if search[0].lenght > 1
+      return enume(search[0], pdis)/enume(search[1], pdis)
+    else
+      sign = search[0][0] #To obtain the sign of the node
+      node_Name = search[0].gsub(/\+/,'').gsub(/-/,'') #To remove any sign that can exist
+      joints = search[1].gsub(/\+/,'').gsub(/-/,'').split(',')
+      antn = []
+      antd = []
+      Nodes.each do |n|                 #This cycle will help us to find the node we are trying to modify
+        if n.get_Name == node_Name      #To find the node given in the probability 'prob'
+          #puts "Estoy en el nodo: #{node_Name}"
+          #Get the antecesors of the node to be able to apply total probability
+          #puts "Sin antecesores: #{antn}"
+          get_antecesors(node_Name, antn)
+          #puts "La primera"
+          verify_Antecesors(node_Name, antn)
+          #Apply total probability for the nodes in search[0]
+          #puts "Con antecesores: #{antn}"
+          #puts "Numerator: "
+          num = totalProb(antn, pdis); #[+G,-S,+R]
+          #puts "Numerator is #{num}"
+          #puts "Sin antecesores: #{antd}"
+          get_antecesors(joints[0], antd)
+          #puts "La segunda"
+          verify_Antecesors(node_Name, antn)
+          #puts "Con antecesores: #{antd}"
+          #puts "Denominator"
+          denom = totalProb(antd, pdis); #[-S,+R]
+          #puts "Denominator is #{denom}"
+          #puts "Mi división me va a dar: numerador #{num} y denominador #{denom}"
+          return num/denom #Obtain the probability of the division P(+G,-R,+S)/P(-R,+S)
+        end
       end
     end
   else  #Root
