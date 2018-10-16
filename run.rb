@@ -271,8 +271,26 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
   if prob.include? '|'  #To check if we have a given
     search = prob.split('|') #Obtain elements in an array of [[+G],[-R,+S]]
     #Verify the # of elements in each side
-    if search[0].length > 1
-      return enume(search[0], pdis)/enume(search[1], pdis)
+    if search[0].split(',').length > 1
+      if search[1].split(',').length > 1
+        denom = enume(search[1], pdis)
+      else
+        sign = search[1][0] #To obtain the sign of the +G
+        #puts "search: #{search} y tomando bien? #{sign}"
+        node_Name= search[1].gsub(/\+/,'').gsub(/-/,'') #Remove signs and leave G alone
+        Nodes.each do |n| #Obtain the node from the array
+          if n.get_Name == node_Name #If we have a match
+            if n.get_Parents.length != 0
+              denom = enume(search[1], pdis)
+              #puts "Salida? #{denom}"
+            else
+              denom = n.search_Prob(sign,"") #Return the probability of the root
+            end
+          end
+        end
+      end
+      #puts "Arriba: #{search[0]} abajo: #{search[1]}"
+      return enume(search[0], pdis)/denom
     else
       sign = search[0][0] #To obtain the sign of the node
       node_Name = search[0].gsub(/\+/,'').gsub(/-/,'') #To remove any sign that can exist
@@ -306,6 +324,7 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
       end
     end
   else  #Root
+    #FALTA VALIDAR SI EL NODO RAIZ NO EXISTE PORQUE DEPENDE DE OTROS, PARA APLICAR ENUMERATION
     sign = prob[0][0] #To obtain the sign of the +G
     node_Name= prob.gsub(/\+/,'').gsub(/-/,'') #Remove signs and leave G alone
     Nodes.each do |n| #Obtain the node from the array
@@ -356,7 +375,6 @@ def enume(root, query)#+G,-R       CORRECT!!!!!!
   sum = 0
   queryns = []
   added = []
-  count = 0
   query.each do |e|
     queryns.push(e.gsub(/\+/,'').gsub(/-/,'') ) 
   end
@@ -369,14 +387,14 @@ def enume(root, query)#+G,-R       CORRECT!!!!!!
         #puts "Coincidence in #{n.get_Name} and #{q}"
         n.parents.each do |p|
           #puts "Mi padre es: #{p.get_Name}"
-          if q != p.get_Name #Go through the parents to determine 
-            added.push(p.get_Name).uniq! #Add the missing elements
-            count += 1
+          if q != p.get_Name #Go through the parents to obtain what to be used as substraction to obtain only the elements for sumation
+            added.push(p.get_Name).uniq! 
           end
         end
       end
     end
   end
+  #puts "Que tengo: #{added} y acá #{queryns}"
   uni = added - queryns
   #puts "New elements: #{added} old elements #{queryns} supposely good: #{uni}"
   #Obtain the probability of the elements with opposite signs
@@ -387,7 +405,7 @@ def enume(root, query)#+G,-R       CORRECT!!!!!!
   #puts "counts: #{count} and uni: #{uni}"
   uni.each do |a| #Recorrer cada elemento nuevo
     #puts "Ponte sólo 1 vez"
-    count.times do |i| #Recorrer el número de veces que necesito para formar todas las combinaciones posibles
+    2.times do |i| #Recorrer el número de veces que necesito para formar todas las combinaciones posibles
       if j % 2 == 0
         #puts "Mandando #{str+"+"+a}"
         #puts "Positive turn"
@@ -399,6 +417,7 @@ def enume(root, query)#+G,-R       CORRECT!!!!!!
       end
       j += 1
     end
+    j = 0
   end
   #puts "La suma de mis valores da: #{sum}"
   sum
@@ -504,6 +523,8 @@ end
 #    puts "El valor debería de ser: #{n.search_Prob('+', "-Rain")}"
 #  end
 #end
+
+#puts "Probando: #{("+GrassWet|-Rain").split("|")}"
 
 query.each do |line|
   #Como validar si la probabilidad ya la tengo para regresarla directo
