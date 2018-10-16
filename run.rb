@@ -264,13 +264,13 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
         get_antecesors(node_Name, antn);
         #Apply total probability for the nodes in search[0]
         #puts "Con antecesores: #{antn}"
-        puts "Numerator: "
+        #puts "Numerator: "
         num = totalProb(antn, pdis); #[+G,-S,+R]
         #puts "Numerator is #{num}"
         #puts "Sin antecesores: #{antd}"
         get_antecesors(joints[0], antd);
         #puts "Con antecesores: #{antd}"
-        puts "Denominator"
+        #puts "Denominator"
         denom = totalProb(antd, pdis); #[-S,+R]
         #puts "Denominator is #{denom}"
         return num/denom #Obtain the probability of the division P(+G,-R,+S)/P(-R,+S)
@@ -288,25 +288,135 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
 end
 
 def totalProb(query, pdis)#[+G,-S,+R]
-  puts "Query = #{query} and pdis = #{pdis}"
+  #puts "Query = #{query} and pdis = #{pdis}"
   sum = 1
+  root = []
   query.each do |q| #Go trough the query nodes
     Nodes.each do |n| #Go trough the nodes
       if q == n.get_Name #To find the node
         if n.get_Parents.length == 0
           sum *= n.search_Prob(q[0], "")
         else
-          temp = pdis.dup
-          puts "Nodo actual #{n.get_Name}"
-          puts "Arreglo actual = #{temp}"
-          temp.reject!{|b| b.include?(n.name)} #Delete the root node
-          puts "Arreglo nuevo = #{temp}"
-          sum *= n.search_Prob(q[0], temp.join(",")) 
+          temp = pdis.dup #What the use is looking fo, for example: +G,-R
+          #puts "Temporal: #{temp}"
+          #puts "Nodo actual #{n.get_Name}"
+          #puts "Arreglo actual = #{temp}"
+          temp.reject!{|b| root.push(b); b.include?(n.name)} #Delete the root node
+          #puts "Arreglo nuevo = #{temp}"
+          if n.get_Parents.length != temp.length #Were missing parents to be considered, so we apply enumeration algoritm
+            sum += enume(root, pdis)
+          else #We're all set, and so we just obtain the probabilities
+            sum *= n.search_Prob(q[0], temp.join(",")) 
+          end
         end
       end
     end
   end
   sum
+end
+
+def enume(root, query)#+G,-R
+  sum = 0
+  queryns = []
+  added = []
+  count = 0
+  query.each do |e|
+    queryns.push(e.gsub(/\+/,'').gsub(/-/,'') ) 
+  end
+  #puts "New: #{queryns}"
+  Nodes.each do |n| #Go trough the nodes
+    #puts "Node: #{n.get_Name}"
+    queryns.each do |q| #Go through the array
+      #puts "Query element: #{q}"
+      if n.get_Name == q #Found the array I wanted
+        #puts "Coincidence in #{n.get_Name} and #{q}"
+        n.parents.each do |p|
+          #puts "Mi padre es: #{p.get_Name}"
+          if q != p.get_Name #Go through the parents to determine 
+            added.push(p.get_Name).uniq! #Add the missing elements
+            count += 1
+          end
+        end
+      end
+    end
+  end
+  uni = added - queryns
+  #puts "New elements: #{added} old elements #{queryns} supposely good: #{uni}"
+  #Obtain the probability of the elements with opposite signs
+  #added -> Nodos antecesores no contemplados
+  #query -> Nodos iniciales con signos
+  str = query.join(",") + ","
+  j = 0
+  count.times do |i| #Recorrer el número de veces que necesito para formar todas las combinaciones posibles
+    uni.each do |a| #Recorrer cada elemento nuevo
+      if j % 2 == 0
+        sum += chain_rule(str+"+"+a)
+      else
+        sum += chain_rule("-"+a)
+      end
+    end
+  end
+  sum
+  #puts "Nuevo total probability: #{str}"
+  #puts "Nuevos elementos: #{queryns}"
+end
+
+def chain_rule(string)
+  prod = 1
+  nuevo = []
+  #puts "Elementos: #{string.gsub(/ /, '').split(",")}"
+  proba = string.gsub(/ /, '').split(",") #In the form of [+G, -R, +S] on first iteration
+  proba.each do |ele|
+    Nodes.each do |n|
+      if n.get_Name == ele.gsub(/\+/,'').gsub(/-/,'')
+        #Check size of parent
+        order(nuevo, proba) #Ordena el arreglo por orden cantidad de padres
+        #puts "Hasta ahorita: #{string.sub(',', "|")}"
+      end
+    end
+  end
+  #nuevo es un arreglo con los nodos ordenados por cantidad de padres
+  s = nuevo.join(",") #Obtengo +G,+S,-R
+  s.sub!(",", "|") #Obtengo +G|+S,-R
+  arr = s.split("|") #Obtengo ["+G","+S,-R"]
+  #puts "Vamos bien: #{arr}"
+  nuevo.each do |nu|
+    Nodes.each do |n|
+      if n.get_Name == nu.gsub(/\+/,'').gsub(/-/,'')
+        if arr.length > 1
+          #puts "Voy a querer obtener el nodo: #{n.get_Name} con signo #{nu[0]} y joints #{arr[1]}"
+          prod *= n.search_Prob(nu[0], arr[1])
+          #puts "Probabilidad de: #{prod}"
+          arr = arr.drop(1) #Obtengo [+S -R]
+          #puts "Hasta ahorita #{arr.join(",").sub!(",", "|").split("|")}"
+        else
+          #Obtener la probabilidad de sólo 1 nodo
+        end
+      end
+    end
+  end
+  #puts "Chain rule probability: #{prod}"
+  prod
+end
+
+def order(nuevo, arr) #Order the array in terms of its parents
+  temp = 0
+  temparr = []
+  arr.each do |a|
+    Nodes.each do |n|
+      if n.get_Name == a.gsub(/\+/,'').gsub(/-/,'')
+        temp = n.get_Parents.length
+        temparr << [temp, a]
+      end
+    end
+  end
+  #puts "Arreglo de arreglos sin ordenar: #{temparr}"
+  temparr.sort_by! {|i| i.first }.reverse!
+  #puts "Arreglo de arreglos ordenados: #{temparr}"
+  temparr.each do |t|
+    nuevo.push(t[1]).uniq!
+  end
+  #puts "Arreglo final: #{nuevo}"
 end
 
 ############################################################################
