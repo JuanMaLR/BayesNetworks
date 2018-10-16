@@ -271,7 +271,7 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
   if prob.include? '|'  #To check if we have a given
     search = prob.split('|') #Obtain elements in an array of [[+G],[-R,+S]]
     #Verify the # of elements in each side
-    if search[0].lenght > 1
+    if search[0].length > 1
       return enume(search[0], pdis)/enume(search[1], pdis)
     else
       sign = search[0][0] #To obtain the sign of the node
