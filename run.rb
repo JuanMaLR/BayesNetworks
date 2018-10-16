@@ -220,6 +220,25 @@ def get_antecesors(node_name, ret_arr)
   end
 end
 
+def verify_Antecesors (node_name, arr)
+  #puts "El nombre de mi nodo es: #{node_name} y mi arreglo es: #{arr}"
+  temp = []
+  Nodes.each do |n|
+    if n.get_Name == node_name
+      if n.get_Parents.length != arr.length
+        #puts "Longitud de mis padres: #{n.get_Parents.length} y de mi arreglo: #{arr.length}"
+        n.get_Parents.each do |p|
+          temp.push(p.get_Name)
+        end
+      end
+    end
+  end
+  #puts "Hasta ahora amigos tenemos como arreglo principal: #{arr} y como arreglo temporal: #{temp}, cuya resta da #{arr-temp}"
+  arr.delete((arr - temp).join(","))
+  arr.push(node_name)
+  #puts "Nuevo: #{arr}"
+end
+
 def set_CPT(prob,number)
   if prob.include? '|'  #Is a given
     assign=prob.split('|')
@@ -261,14 +280,18 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
         #puts "Estoy en el nodo: #{node_Name}"
         #Get the antecesors of the node to be able to apply total probability
         #puts "Sin antecesores: #{antn}"
-        get_antecesors(node_Name, antn);
+        get_antecesors(node_Name, antn)
+        #puts "La primera"
+        verify_Antecesors(node_Name, antn)
         #Apply total probability for the nodes in search[0]
         #puts "Con antecesores: #{antn}"
         #puts "Numerator: "
         num = totalProb(antn, pdis); #[+G,-S,+R]
         #puts "Numerator is #{num}"
         #puts "Sin antecesores: #{antd}"
-        get_antecesors(joints[0], antd);
+        get_antecesors(joints[0], antd)
+        #puts "La segunda"
+        verify_Antecesors(node_Name, antn)
         #puts "Con antecesores: #{antd}"
         #puts "Denominator"
         denom = totalProb(antd, pdis); #[-S,+R]
@@ -295,7 +318,8 @@ def totalProb(query, pdis)#[+G,-S,+R]
     Nodes.each do |n| #Go trough the nodes
       if q == n.get_Name #To find the node
         if n.get_Parents.length == 0
-          sum *= n.search_Prob(q[0], "")
+          #puts "La forma en que lo tengo es: #{pdis[0][0]}"
+          sum *= n.search_Prob(pdis[0], "")
         else
           temp = pdis.dup #What the use is looking fo, for example: +G,-R
           #puts "Temporal: #{temp}"
@@ -388,9 +412,11 @@ def chain_rule(string)
           prod *= n.search_Prob(nu[0], arr[1])
           #puts "Probabilidad de: #{prod}"
           arr = arr.drop(1) #Obtengo [+S -R]
+          arr = arr.join(",").split(",")
           #puts "Hasta ahorita #{arr.join(",").sub!(",", "|").split("|")}"
         else
-          #Obtener la probabilidad de sólo 1 nodo
+          #puts "Lo que tengo hasta ahorita: #{arr}"
+          totalProb(arr, arr)
         end
       end
     end
