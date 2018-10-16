@@ -118,7 +118,7 @@ class Node
           f = false
         end
       end
-      if
+      if f
         if sign=='+'
           @prob[caso][0]=probability
           @prob[caso][1]=1.0 -probability
@@ -128,7 +128,7 @@ class Node
         end
       end
     end
-    #puts @Prob
+    #puts @prob
     #puts @name
   end
 
@@ -296,6 +296,7 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
         #puts "Denominator"
         denom = totalProb(antd, pdis); #[-S,+R]
         #puts "Denominator is #{denom}"
+        puts "Mi división me va a dar: numerador #{num} y denominador #{denom}"
         return num/denom #Obtain the probability of the division P(+G,-R,+S)/P(-R,+S)
       end
     end
@@ -325,11 +326,14 @@ def totalProb(query, pdis)#[+G,-S,+R]
           #puts "Temporal: #{temp}"
           #puts "Nodo actual #{n.get_Name}"
           #puts "Arreglo actual = #{temp}"
-          temp.reject!{|b| root.push(b); b.include?(n.name)} #Delete the root node
+          temp.reject!{|b| root.push(b).uniq!; b.include?(n.name)} #Delete the root node
           #puts "Arreglo nuevo = #{temp}"
           if n.get_Parents.length != temp.length #Were missing parents to be considered, so we apply enumeration algoritm
-            sum += enume(root, pdis)
+            #puts "So far, so good, with root being: #{root} and pdis: #{pdis}"
+            #puts "HOLIIIIII"
+            sum *= enume(root, pdis)
           else #We're all set, and so we just obtain the probabilities
+            #puts "Do we appear here?"
             sum *= n.search_Prob(q[0], temp.join(",")) 
           end
         end
@@ -371,13 +375,20 @@ def enume(root, query)#+G,-R
   #query -> Nodos iniciales con signos
   str = query.join(",") + ","
   j = 0
-  count.times do |i| #Recorrer el número de veces que necesito para formar todas las combinaciones posibles
-    uni.each do |a| #Recorrer cada elemento nuevo
+  #puts "counts: #{count} and uni: #{uni}"
+  uni.each do |a| #Recorrer cada elemento nuevo
+    #puts "Ponte sólo 1 vez"
+    count.times do |i| #Recorrer el número de veces que necesito para formar todas las combinaciones posibles
       if j % 2 == 0
+        #puts "Mandando #{str+"+"+a}"
+        #puts "Positive turn"
         sum += chain_rule(str+"+"+a)
       else
-        sum += chain_rule("-"+a)
+        #puts "Mandando #{str+"-"+a}"
+        #puts "Negative turn"
+        sum += chain_rule(str+"-"+a)
       end
+      j += 1
     end
   end
   sum
@@ -399,24 +410,28 @@ def chain_rule(string)
       end
     end
   end
+
   #nuevo es un arreglo con los nodos ordenados por cantidad de padres
   s = nuevo.join(",") #Obtengo +G,+S,-R
   s.sub!(",", "|") #Obtengo +G|+S,-R
   arr = s.split("|") #Obtengo ["+G","+S,-R"]
-  #puts "Vamos bien: #{arr}"
   nuevo.each do |nu|
     Nodes.each do |n|
+      #puts "Vamos bien: #{arr}"
       if n.get_Name == nu.gsub(/\+/,'').gsub(/-/,'')
         if arr.length > 1
           #puts "Voy a querer obtener el nodo: #{n.get_Name} con signo #{nu[0]} y joints #{arr[1]}"
           prod *= n.search_Prob(nu[0], arr[1])
-          #puts "Probabilidad de: #{prod}"
+          #puts "Probabilidad de: #{prod} cuando debería de ser 0.9*0.4*0.8"
           arr = arr.drop(1) #Obtengo [+S -R]
           arr = arr.join(",").split(",")
+          #puts "El arreglo es: #{arr}"
           #puts "Hasta ahorita #{arr.join(",").sub!(",", "|").split("|")}"
         else
           #puts "Lo que tengo hasta ahorita: #{arr}"
-          totalProb(arr, arr)
+          t = arr[0].gsub(/\+/,'').gsub(/-/,'')
+          prod *= totalProb(Array[t], arr)
+          #puts "Tu me das: #{prod}"
         end
       end
     end
@@ -467,6 +482,13 @@ end
 probs.each do |line|
   auxL = line.gsub(/ /,'').split('=')
   set_CPT(auxL[0],auxL[1].to_f)
+end
+
+Nodes.each do |n|
+  if n.get_Name == "Sprinkler"
+    puts "Probando en nodo #{n.get_Name} con signo + y joint -Rain"
+    puts "El valor debería de ser: #{n.search_Prob('+', "-Rain")}"
+  end
 end
 
 query.each do |line|
