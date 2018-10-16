@@ -296,7 +296,7 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
         #puts "Denominator"
         denom = totalProb(antd, pdis); #[-S,+R]
         #puts "Denominator is #{denom}"
-        puts "Mi división me va a dar: numerador #{num} y denominador #{denom}"
+        #puts "Mi división me va a dar: numerador #{num} y denominador #{denom}"
         return num/denom #Obtain the probability of the division P(+G,-R,+S)/P(-R,+S)
       end
     end
@@ -318,9 +318,12 @@ def totalProb(query, pdis)#[+G,-S,+R]
   query.each do |q| #Go trough the query nodes
     Nodes.each do |n| #Go trough the nodes
       if q == n.get_Name #To find the node
-        if n.get_Parents.length == 0
+        #puts "El nodo es: #{n.get_Name} y la cantidad es: #{n.get_Parents.length}"
+        if query.length == 1 && n.get_Parents.length == 0
+          #puts "nodo: #{n.get_Name} and query: #{query} and parents #{n.get_Parents.length}"
           #puts "La forma en que lo tengo es: #{pdis[0][0]}"
-          sum *= n.search_Prob(pdis[0], "")
+          return n.search_Prob(pdis[0], "")
+          #puts "Esto me está dando mal: #{sum}"
         else
           temp = pdis.dup #What the use is looking fo, for example: +G,-R
           #puts "Temporal: #{temp}"
@@ -331,19 +334,20 @@ def totalProb(query, pdis)#[+G,-S,+R]
           if n.get_Parents.length != temp.length #Were missing parents to be considered, so we apply enumeration algoritm
             #puts "So far, so good, with root being: #{root} and pdis: #{pdis}"
             #puts "HOLIIIIII"
-            sum *= enume(root, pdis)
+            #puts "Sum: #{sum}"
+            return enume(root, pdis)
           else #We're all set, and so we just obtain the probabilities
             #puts "Do we appear here?"
-            sum *= n.search_Prob(q[0], temp.join(",")) 
+            return n.search_Prob(q[0], temp.join(",")) 
           end
         end
       end
     end
   end
-  sum
+  #puts "Tu tienes: #{sum}"
 end
 
-def enume(root, query)#+G,-R
+def enume(root, query)#+G,-R       CORRECT!!!!!!
   sum = 0
   queryns = []
   added = []
@@ -391,12 +395,13 @@ def enume(root, query)#+G,-R
       j += 1
     end
   end
+  #puts "La suma de mis valores da: #{sum}"
   sum
   #puts "Nuevo total probability: #{str}"
   #puts "Nuevos elementos: #{queryns}"
 end
 
-def chain_rule(string)
+def chain_rule(string) #Correct!!!!!!
   prod = 1
   nuevo = []
   #puts "Elementos: #{string.gsub(/ /, '').split(",")}"
@@ -420,6 +425,7 @@ def chain_rule(string)
       #puts "Vamos bien: #{arr}"
       if n.get_Name == nu.gsub(/\+/,'').gsub(/-/,'')
         if arr.length > 1
+          #puts "Debo aparecer dos veces"
           #puts "Voy a querer obtener el nodo: #{n.get_Name} con signo #{nu[0]} y joints #{arr[1]}"
           prod *= n.search_Prob(nu[0], arr[1])
           #puts "Probabilidad de: #{prod} cuando debería de ser 0.9*0.4*0.8"
@@ -428,15 +434,18 @@ def chain_rule(string)
           #puts "El arreglo es: #{arr}"
           #puts "Hasta ahorita #{arr.join(",").sub!(",", "|").split("|")}"
         else
+          #puts "Debo aparecer una vez"
           #puts "Lo que tengo hasta ahorita: #{arr}"
           t = arr[0].gsub(/\+/,'').gsub(/-/,'')
-          prod *= totalProb(Array[t], arr)
-          #puts "Tu me das: #{prod}"
+          #puts "Lo que le paso a total es: #{t} y como segundo: #{arr.join(",")}"
+          prod *= totalProb(Array[t], arr.join(","))
+          #puts "A ver que tengo: #{totalProb(Array["Rain"], "-Rain")}"
+          #puts "Tu me das: #{totalProb(Array[t], arr.join(","))}"
         end
       end
     end
   end
-  #puts "Chain rule probability: #{prod}"
+  #puts "Chain rule probability: #{prod}" 
   prod
 end
 
@@ -484,12 +493,12 @@ probs.each do |line|
   set_CPT(auxL[0],auxL[1].to_f)
 end
 
-Nodes.each do |n|
-  if n.get_Name == "Sprinkler"
-    puts "Probando en nodo #{n.get_Name} con signo + y joint -Rain"
-    puts "El valor debería de ser: #{n.search_Prob('+', "-Rain")}"
-  end
-end
+#Nodes.each do |n|
+#  if n.get_Name == "Sprinkler"
+#    puts "Probando en nodo #{n.get_Name} con signo + y joint -Rain"
+#    puts "El valor debería de ser: #{n.search_Prob('+', "-Rain")}"
+#  end
+#end
 
 query.each do |line|
   #Como validar si la probabilidad ya la tengo para regresarla directo
