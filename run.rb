@@ -132,61 +132,66 @@ class Node
     #puts @name
   end
 
-def search_Prob(sign,parameters)
-  if @parents.length > 1
-    lookArray = Array.new(parameters.split(',').length)
-    parameters.split(',').each do |par_name|
-      parSign = par_name[0]
-      parName = par_name.gsub(/\+/,'').gsub(/-/,'')
-      Nodes.length.times do |nodePosition|
-        if Nodes[nodePosition].get_Name == parName
-          if parSign == '+'
-            lookArray[nodePosition] = 1;
-          else
-            lookArray[nodePosition] = 0;
-          end
-        end
-      end
+
+  def search_Prob(sign,parameters)
+    if parameters.split(',').length != @parents.length
+      return false
     end
-  end
-  if @parents.length == 1
-    parameters.split(',').each do |par_name|
-      parSign = par_name[0]
-      parName = par_name.gsub(/\+/,'').gsub(/-/,'')
-      Nodes.length.times do |nodePosition|
-        if Nodes[nodePosition].get_Name == parName
-          if parSign == '+'
-            lookArray= 1;
-          else
-            lookArray= 0;
-          end
-        end
-      end
-    end
-  end
-  (2**@parents.length).times  do |caso|
-    f=true
     if @parents.length > 1
-      @parents.length.times do |i|
-        if @parMap[caso][i].to_i != lookArray[i].to_i
-          f = false
+      lookArray = Array.new(parameters.split(',').length)
+      parameters.split(',').each do |par_name|
+        parSign = par_name[0]
+        parName = par_name.gsub(/\+/,'').gsub(/-/,'')
+        Nodes.length.times do |nodePosition|
+          if Nodes[nodePosition].get_Name == parName
+            if parSign == '+'
+              lookArray[nodePosition] = 1;
+            else
+              lookArray[nodePosition] = 0;
+            end
+          end
         end
       end
     end
     if @parents.length == 1
-      if @parMap[caso][0].to_i != lookArray.to_i
-        f = false
+      parameters.split(',').each do |par_name|
+        parSign = par_name[0]
+        parName = par_name.gsub(/\+/,'').gsub(/-/,'')
+        Nodes.length.times do |nodePosition|
+          if Nodes[nodePosition].get_Name == parName
+            if parSign == '+'
+              lookArray= 1;
+            else
+              lookArray= 0;
+            end
+          end
+        end
       end
     end
-    if f
-      if sign=='+'
-        return @prob[caso][0]
-      else
-        return @prob[caso][1]
+    (2**@parents.length).times  do |caso|
+      f=true
+      if @parents.length > 1
+        @parents.length.times do |i|
+          if @parMap[caso][i].to_i != lookArray[i].to_i
+            f = false
+          end
+        end
+      end
+      if @parents.length == 1
+        if @parMap[caso][0].to_i != lookArray.to_i
+          f = false
+        end
+      end
+      if f
+        if sign=='+'
+          return @prob[caso][0]
+        else
+          return @prob[caso][1]
+        end
       end
     end
+    return false
   end
-end
 
 end
 
@@ -268,6 +273,36 @@ def set_CPT(prob,number)
 end
 
 def get_Probability(prob, pdis) #In the form +G|-R,+S
+
+
+
+##################################################################
+# This will return immediately in case the prob is in the tables #
+##################################################################
+#If it´s a given
+  if prob.include? '|'
+    #Name our search variable
+    search = prob.split('|')
+    #if i have just one value in the prob
+    if search[0].split(',') == 1
+      #To obtain the sign of the node
+      sign = search[0][0]
+      # #Remove sign from the node
+      node_Name= search[0].gsub(/\+/,'').gsub(/-/,'')
+      #Obtain the node from the array
+      Nodes.each do |n|
+        #If we have a match
+        if n.get_Name == node_Name
+          if n.search_Prob(sign,search[1]) != false
+            return n.search_Prob(sign,search[1])
+          end
+        end
+      end
+    end
+    #It is not a given
+  end
+###################################################################
+
   if prob.include? '|'  #To check if we have a given
     search = prob.split('|') #Obtain elements in an array of [[+G],[-R,+S]]
     #Verify the # of elements in each side
