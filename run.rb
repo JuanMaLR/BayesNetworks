@@ -299,7 +299,20 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
         end
       end
     end
+  else
     #It is not a given
+    sign = prob[0]
+    # #Remove sign from the node
+    node_Name= prob.gsub(/\+/,'').gsub(/-/,'')
+    #Obtain the node from the array
+    Nodes.each do |n|
+      #If we have a match
+      if n.get_Name == node_Name
+        if n.search_Prob(sign,"") != false
+          return n.search_Prob(sign,search[1])
+        end
+      end
+    end
   end
 ###################################################################
 
@@ -358,15 +371,28 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
         end
       end
     end
-  else  #Root
-    #FALTA VALIDAR SI EL NODO RAIZ NO EXISTE PORQUE DEPENDE DE OTROS, PARA APLICAR ENUMERATION
-    sign = prob[0][0] #To obtain the sign of the +G
-    node_Name= prob.gsub(/\+/,'').gsub(/-/,'') #Remove signs and leave G alone
-    Nodes.each do |n| #Obtain the node from the array
-      if n.get_Name == node_Name #If we have a match
-        return n.search_Prob(sign,"") #Return the probability of the root
+  else
+    ######No given, but not root
+    #To obtain the sign of the node
+    antn = []
+    sign = prob[0]
+    node_Name= prob.gsub(/\+/,'').gsub(/-/,'')
+    Nodes.each do |n|
+      if n.get_Name == node_Name
+        get_antecesors(node_Name, antn)
+        verify_Antecesors(node_Name, antn)
+        return totalProb(antn, pdis);
       end
     end
+    ##########################################################################################
+    #FALTA VALIDAR SI EL NODO RAIZ NO EXISTE PORQUE DEPENDE DE OTROS, PARA APLICAR ENUMERATION
+    #sign = prob[0][0] #To obtain the sign of the +G
+    #node_Name= prob.gsub(/\+/,'').gsub(/-/,'') #Remove signs and leave G alone
+    #Nodes.each do |n| #Obtain the node from the array
+    #  if n.get_Name == node_Name #If we have a match
+    #    return n.search_Prob(sign,"") #Return the probability of the root
+    #  end
+    #end
   end
 end
 
