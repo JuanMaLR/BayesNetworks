@@ -273,9 +273,6 @@ def set_CPT(prob,number)
 end
 
 def get_Probability(prob, pdis) #In the form +G|-R,+S
-
-
-
 ##################################################################
 # This will return immediately in case the prob is in the tables #
 ##################################################################
@@ -283,62 +280,52 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
   if prob.include? '|'
     #Name our search variable
     search = prob.split('|')
-    #if i have just one value in the prob
-    if search[0].split(',') == 1
+    #if I have just one value in the prob
+    #puts "Esta checando #{search[0].split(',').length}"
+    if search[0].split(',').length == 1
       #To obtain the sign of the node
       sign = search[0][0]
       # #Remove sign from the node
-      node_Name= search[0].gsub(/\+/,'').gsub(/-/,'')
+      node_Name = search[0].gsub(/\+/,'').gsub(/-/,'')
       #Obtain the node from the array
       Nodes.each do |n|
         #If we have a match
         if n.get_Name == node_Name
           if n.search_Prob(sign,search[1]) != false
+             #puts "No debo entrar aquí"
             return n.search_Prob(sign,search[1])
+          else
+            #puts "Ahora sí entro aquí"
+            joints = search[1].gsub(/\+/,'').gsub(/-/,'').split(',')
+            antn = []
+            antd = []
+            #puts "Estoy en el nodo: #{node_Name}"
+            #Get the antecesors of the node to be able to apply total probability
+            #puts "Sin antecesores: #{antn}"
+            #get_antecesors(node_Name, antn)
+            #puts "Mis antecesores: #{antn}"
+            #puts "La primera"
+            #verify_Antecesors(node_Name, antn)
+            #puts "Luego de verificarlos: #{antn}"
+            #Apply total probability for the nodes in search[0]
+            #puts "Con antecesores: #{antn}"
+            #puts "Numerator: "
+            #puts "Lo que tengo: #{pdis}"
+            num = enume(antn, pdis); #[+G,-S,+R]
+            #puts "Numerator is #{num}"
+            #puts "Sin antecesores: #{antd}"
+            #get_antecesors(joints[0], antd)
+            #puts "La segunda"
+            #verify_Antecesors(node_Name, antn)
+            #puts "Con antecesores: #{antd}"
+            #puts "Denominator"
+            denom = enume(antd, prob.split('|')[1].split(',')); #[-S,+R]
+            #puts "Denominator is #{denom}"
+            #puts "Mi división me va a dar: numerador #{num} y denominador #{denom}"
+            return num/denom #Obtain the probability of the division P(+G,-R,+S)/P(-R,+S)
           end
         end
       end
-    end
-  else
-    #It is not a given
-    sign = prob[0]
-    # #Remove sign from the node
-    node_Name= prob.gsub(/\+/,'').gsub(/-/,'')
-    #Obtain the node from the array
-    Nodes.each do |n|
-      #If we have a match
-      if n.get_Name == node_Name
-        if n.search_Prob(sign,"") != false
-          return n.search_Prob(sign,search[1])
-        end
-      end
-    end
-  end
-###################################################################
-
-  if prob.include? '|'  #To check if we have a given
-    search = prob.split('|') #Obtain elements in an array of [[+G],[-R,+S]]
-    #Verify the # of elements in each side
-    if search[0].split(',').length > 1
-      if search[1].split(',').length > 1
-        denom = enume(search[1], pdis)
-      else
-        sign = search[1][0] #To obtain the sign of the +G
-        #puts "search: #{search} y tomando bien? #{sign}"
-        node_Name= search[1].gsub(/\+/,'').gsub(/-/,'') #Remove signs and leave G alone
-        Nodes.each do |n| #Obtain the node from the array
-          if n.get_Name == node_Name #If we have a match
-            if n.get_Parents.length != 0
-              denom = enume(search[1], pdis)
-              #puts "Salida? #{denom}"
-            else
-              denom = n.search_Prob(sign,"") #Return the probability of the root
-            end
-          end
-        end
-      end
-      #puts "Arriba: #{search[0]} abajo: #{search[1]}"
-      return enume(search[0], pdis)/denom
     else
       sign = search[0][0] #To obtain the sign of the node
       node_Name = search[0].gsub(/\+/,'').gsub(/-/,'') #To remove any sign that can exist
@@ -372,28 +359,26 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
       end
     end
   else
-    ######No given, but not root
-    #To obtain the sign of the node
-    antn = []
+    #It is not a given
     sign = prob[0]
+    ant = []
+    # #Remove sign from the node
     node_Name= prob.gsub(/\+/,'').gsub(/-/,'')
+    #Obtain the node from the array
     Nodes.each do |n|
+      #If we have a match
       if n.get_Name == node_Name
-        get_antecesors(node_Name, antn)
-        verify_Antecesors(node_Name, antn)
-        return totalProb(antn, pdis);
+        if n.search_Prob(sign,"") != false
+          return n.search_Prob(sign,"")
+        else
+          get_antecesors(node_Name, ant)
+          verify_Antecesors(node_Name, ant)
+          return totalProb(ant, pdis)
+        end
       end
     end
-    ##########################################################################################
-    #FALTA VALIDAR SI EL NODO RAIZ NO EXISTE PORQUE DEPENDE DE OTROS, PARA APLICAR ENUMERATION
-    #sign = prob[0][0] #To obtain the sign of the +G
-    #node_Name= prob.gsub(/\+/,'').gsub(/-/,'') #Remove signs and leave G alone
-    #Nodes.each do |n| #Obtain the node from the array
-    #  if n.get_Name == node_Name #If we have a match
-    #    return n.search_Prob(sign,"") #Return the probability of the root
-    #  end
-    #end
   end
+###################################################################
 end
 
 def totalProb(query, pdis)#[+G,-S,+R]
@@ -461,24 +446,25 @@ def enume(root, query)#+G,-R       CORRECT!!!!!!
   #Obtain the probability of the elements with opposite signs
   #added -> Nodos antecesores no contemplados
   #query -> Nodos iniciales con signos
-  str = query.join(",") + ","
-  j = 0
+  #puts "Mi query es: #{query}"
   #puts "counts: #{count} and uni: #{uni}"
-  uni.each do |a| #Recorrer cada elemento nuevo
-    #puts "Ponte sólo 1 vez"
-    2.times do |i| #Recorrer el número de veces que necesito para formar todas las combinaciones posibles
-      if j % 2 == 0
+  (2**uni.length).times do |i| #Recorrer el número de veces que necesito para formar todas las combinaciones posibles
+    bin = '%0*b' % [uni.length , i]
+    str = query.join(",")
+    uni.length.times do |j| #Recorrer cada elemento nuevo
+      #puts "Ponte sólo 1 vez"
+      if bin[j] == '0'
         #puts "Mandando #{str+"+"+a}"
         #puts "Positive turn"
-        sum += chain_rule(str+"+"+a)
+        str = str + ", +" + uni[j]
       else
         #puts "Mandando #{str+"-"+a}"
         #puts "Negative turn"
-        sum += chain_rule(str+"-"+a)
+        str = str + ", -" + uni[j]
       end
-      j += 1
     end
-    j = 0
+    #puts str
+    sum += chain_rule(str)
   end
   #puts "La suma de mis valores da: #{sum}"
   sum
@@ -500,7 +486,7 @@ def chain_rule(string) #Correct!!!!!!
       end
     end
   end
-
+#puts "Lo nuevo que tengo es: #{nuevo}"
   #nuevo es un arreglo con los nodos ordenados por cantidad de padres
   s = nuevo.join(",") #Obtengo +G,+S,-R
   s.sub!(",", "|") #Obtengo +G|+S,-R
