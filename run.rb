@@ -300,13 +300,13 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
               return num/denom 
             else
               arri = search[0].split(",")
-              #get_antecesors(node_Name, arri)
-              #verify_Antecesors(node_Name, arri)
-              #puts "Enume arr: #{arri}"
               abaj = search[1].split(",")
               #puts "Arriba: #{arri}, abajo: #{abaj}"
-              #puts "Denominator: #{enume(abaj)}"
-              return enume(arri)/enume(abaj)
+              #puts "Numerator: #{enume(arri)}"
+              num = enume(arri)
+              puts "Caso a analizar:"
+              denom = enume(abaj)
+              return num/denom
             end
           end
         end
@@ -392,12 +392,16 @@ def enume(query)#+G,-R       CORRECT!!!!!!
       #puts "Query element: #{q}"
       if n.get_Name == q #Found the array I wanted
         #puts "Coincidence in #{n.get_Name} and #{q}"
-        n.parents.each do |p|
+        #n.parents.each do |p|
           #puts "Mi padre es: #{p.get_Name}"
-          if q != p.get_Name #Go through the parents to obtain what to be used as substraction to obtain only the elements for sumation
-            added.push(p.get_Name).uniq! 
-          end
-        end
+          #puts "Entro 1 vez"
+          #if q != p.get_Name #Go through the parents to obtain what to be used as substraction to obtain only the elements for sumation
+            #added.push(p.get_Name).uniq!
+            #queryns.push(p.get_Name).uniq! 
+            #puts "Nuevo arreglo: #{queryns}"
+          #end
+        #end
+        get_antecesors(n.get_Name, added)
       end
     end
   end
