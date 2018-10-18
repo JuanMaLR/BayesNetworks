@@ -295,10 +295,15 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
              #puts "No debo entrar aquí"
             return n.search_Prob(sign,search[1])
           else
+
             #puts "Ahora sí entro aquí"
-            joints = search[1].gsub(/\+/,'').gsub(/-/,'').split(',')
-            antn = []
-            antd = []
+            arri = search[0].split(",")
+            abaj = search[1].split(",")
+            #puts "Arriba: #{arri}, abajo: #{abaj}"
+            ant = []
+            get_antecesors(node_Name, ant)
+            verify_Antecesors(node_Name, ant)
+            return enume(arri)/totalProb(ant,abaj)
             #puts "Estoy en el nodo: #{node_Name}"
             #Get the antecesors of the node to be able to apply total probability
             #puts "Sin antecesores: #{antn}"
@@ -311,7 +316,7 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
             #puts "Con antecesores: #{antn}"
             #puts "Numerator: "
             #puts "Lo que tengo: #{pdis}"
-            num = enume(pdis); #[+G,-S,+R]
+            #num = enume(pdis); #[+G,-S,+R]
             #puts "Numerator is #{num}"
             #puts "Sin antecesores: #{antd}"
             #get_antecesors(joints[0], antd)
@@ -319,10 +324,10 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
             #verify_Antecesors(node_Name, antn)
             #puts "Con antecesores: #{antd}"
             #puts "Denominator"
-            denom = enume(prob.split('|')[1].split(',')); #[-S,+R]
+            #denom = enume(prob.split('|')[1].split(',')); #[-S,+R]
             #puts "Denominator is #{denom}"
             #puts "Mi división me va a dar: numerador #{num} y denominador #{denom}"
-            return num/denom #Obtain the probability of the division P(+G,-R,+S)/P(-R,+S)
+            #return num/denom #Obtain the probability of the division P(+G,-R,+S)/P(-R,+S)
           end
         end
       end
@@ -330,7 +335,7 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
       #puts "En el elemento 1: #{search[0]} y en el elemento 2: #{search[1]}"
       arri = search[0].split(",")
       abaj = search[1].split(",")
-      #puts "Arriba: #{arri}, abajo: #{abaj}"
+      #puts "Arriba: #{enume(arri)}, abajo: #{enume(abaj)}"
       return enume(arri)/enume(abaj)
     end
   else
