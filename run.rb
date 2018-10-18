@@ -295,11 +295,9 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
             return n.search_Prob(sign,search[1])
           else
             if search[1].split(',') == 1
-              joints = search[1].gsub(/\+/,'').gsub(/-/,'').split(',')
-              antn = []
-              antd = []
               num = enume(pdis); 
               denom = enume(prob.split('|')[1].split(',')); 
+              return num/denom 
             else
               arri = search[0].split(",")
               #get_antecesors(node_Name, arri)
@@ -310,7 +308,6 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
               #puts "Denominator: #{enume(abaj)}"
               return enume(arri)/enume(abaj)
             end
-            return num/denom 
           end
         end
       end
