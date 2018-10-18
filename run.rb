@@ -330,7 +330,7 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
       #puts "En el elemento 1: #{search[0]} y en el elemento 2: #{search[1]}"
       arri = search[0].split(",")
       abaj = search[1].split(",")
-      puts "Arriba: #{arri}, abajo: #{abaj}"
+      #puts "Arriba: #{arri}, abajo: #{abaj}"
       return enume(arri)/enume(abaj)
     end
   else
