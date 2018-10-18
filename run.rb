@@ -311,7 +311,7 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
             #puts "Con antecesores: #{antn}"
             #puts "Numerator: "
             #puts "Lo que tengo: #{pdis}"
-            num = enume(antn, pdis); #[+G,-S,+R]
+            num = enume(pdis); #[+G,-S,+R]
             #puts "Numerator is #{num}"
             #puts "Sin antecesores: #{antd}"
             #get_antecesors(joints[0], antd)
@@ -319,7 +319,7 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
             #verify_Antecesors(node_Name, antn)
             #puts "Con antecesores: #{antd}"
             #puts "Denominator"
-            denom = enume(antd, prob.split('|')[1].split(',')); #[-S,+R]
+            denom = enume(prob.split('|')[1].split(',')); #[-S,+R]
             #puts "Denominator is #{denom}"
             #puts "Mi división me va a dar: numerador #{num} y denominador #{denom}"
             return num/denom #Obtain the probability of the division P(+G,-R,+S)/P(-R,+S)
@@ -327,36 +327,11 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
         end
       end
     else
-      sign = search[0][0] #To obtain the sign of the node
-      node_Name = search[0].gsub(/\+/,'').gsub(/-/,'') #To remove any sign that can exist
-      joints = search[1].gsub(/\+/,'').gsub(/-/,'').split(',')
-      antn = []
-      antd = []
-      Nodes.each do |n|                 #This cycle will help us to find the node we are trying to modify
-        if n.get_Name == node_Name      #To find the node given in the probability 'prob'
-          #puts "Estoy en el nodo: #{node_Name}"
-          #Get the antecesors of the node to be able to apply total probability
-          #puts "Sin antecesores: #{antn}"
-          get_antecesors(node_Name, antn)
-          #puts "La primera"
-          verify_Antecesors(node_Name, antn)
-          #Apply total probability for the nodes in search[0]
-          #puts "Con antecesores: #{antn}"
-          #puts "Numerator: "
-          num = totalProb(antn, pdis); #[+G,-S,+R]
-          #puts "Numerator is #{num}"
-          #puts "Sin antecesores: #{antd}"
-          get_antecesors(joints[0], antd)
-          #puts "La segunda"
-          verify_Antecesors(node_Name, antn)
-          #puts "Con antecesores: #{antd}"
-          #puts "Denominator"
-          denom = totalProb(antd, pdis); #[-S,+R]
-          #puts "Denominator is #{denom}"
-          #puts "Mi división me va a dar: numerador #{num} y denominador #{denom}"
-          return num/denom #Obtain the probability of the division P(+G,-R,+S)/P(-R,+S)
-        end
-      end
+      #puts "En el elemento 1: #{search[0]} y en el elemento 2: #{search[1]}"
+      arri = search[0].split(",")
+      abaj = search[1].split(",")
+      puts "Arriba: #{arri}, abajo: #{abaj}"
+      return enume(arri)/enume(abaj)
     end
   else
     #It is not a given
@@ -405,7 +380,7 @@ def totalProb(query, pdis)#[+G,-S,+R]
             #puts "So far, so good, with root being: #{root} and pdis: #{pdis}"
             #puts "HOLIIIIII"
             #puts "Sum: #{sum}"
-            return enume(root, pdis)
+            return enume(pdis)
           else #We're all set, and so we just obtain the probabilities
             #puts "Do we appear here?"
             return n.search_Prob(q[0], temp.join(",")) 
@@ -417,7 +392,8 @@ def totalProb(query, pdis)#[+G,-S,+R]
   #puts "Tu tienes: #{sum}"
 end
 
-def enume(root, query)#+G,-R       CORRECT!!!!!!
+def enume(query)#+G,-R       CORRECT!!!!!!
+  #puts "Mi query en enum: #{query}"
   sum = 0
   queryns = []
   added = []
@@ -450,6 +426,7 @@ def enume(root, query)#+G,-R       CORRECT!!!!!!
   #puts "counts: #{count} and uni: #{uni}"
   (2**uni.length).times do |i| #Recorrer el número de veces que necesito para formar todas las combinaciones posibles
     bin = '%0*b' % [uni.length , i]
+    #puts bin
     str = query.join(",")
     uni.length.times do |j| #Recorrer cada elemento nuevo
       #puts "Ponte sólo 1 vez"
@@ -473,6 +450,7 @@ def enume(root, query)#+G,-R       CORRECT!!!!!!
 end
 
 def chain_rule(string) #Correct!!!!!!
+  #puts "Tengo ahorita: #{string}"
   prod = 1
   nuevo = []
   #puts "Elementos: #{string.gsub(/ /, '').split(",")}"
