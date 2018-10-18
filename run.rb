@@ -294,7 +294,7 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
              #puts "No debo entrar aquí"
             return n.search_Prob(sign,search[1])
           else
-            if search[1].split(',') == 1
+            if search[1].split(',').length == 1
               num = enume(pdis); 
               denom = enume(prob.split('|')[1].split(',')); 
               return num/denom 
