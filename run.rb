@@ -230,7 +230,7 @@ end
 @param {array} pdis - Array with all nodes to be considered with sign (not ordered) -- ["+Sprinkler", "-Rain"]
 =end
 def verify_Antecesors (node_name, arr, pdis)
-  #puts "El nombre de mi nodo es: #{node_name} y mi arreglo es: #{arr}"
+  #puts "El nombre de mi nodo es: #{node_name} y mi arreglo es: #{arr} y mi distribución de pdis es: #{pdis}"
   temp = []
   Nodes.each do |n|
     if n.get_Name == node_name
@@ -243,6 +243,7 @@ def verify_Antecesors (node_name, arr, pdis)
       end
     end
   end
+  #puts "El padre de #{node_name} es: #{temp}"
   #puts "Hasta ahora amigos tenemos como arreglo principal: #{arr} y como arreglo temporal: #{temp}, cuya resta da #{arr-temp}"
   nuev = []
   #For each parent node
@@ -250,14 +251,17 @@ def verify_Antecesors (node_name, arr, pdis)
     #puts "Verifica si funciona: #{arr.join(',').include? t}"
     #temp.reject!{|b| root.push(b).uniq!; b.include?(n.name)} #Delete the root node
     #Check if the array includes already the name of the parent node
+    #puts "Incluye mi distribución a mi nodo padre? #{pdis.join(',').include? t }"
     if pdis.join(',').include? t 
+      #puts "Entonces entro aquí y funciono? #{pdis.select{|ele| ele.include? t}}"
       #If it includes it (ignoring the sign) then add that node (with sign) to the new array (nuev)
       nuev.push(pdis.select{|ele| ele.include? t})
     end
   end
-  arr = nuev.join(',').split(',')
-  #puts "arr: #{arr}"
-  arr
+  #puts "Lo que tengo en mi nodo de padres es: #{arr} y lo que tengo en mi nodo raiz con signo es: #{nuev}" 
+  #puts "Estoy haciendo: #{nuev.join(',') + temp.join(',')}"
+  #arr = (pdis.select{|ele| ele.include? node_name}.join(',')+','+nuev.join(',')).split(',')
+  nuev.join(',').split(',')
   #arr.push(node_name)
 end
 
@@ -320,7 +324,7 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
               arri = search[0].split(",")
               abaj = search[1].split(",")
               #puts "Arriba: #{arri}, abajo: #{abaj}"
-              #puts "Numerator: #{enume(arri)}"
+              #puts "Denominator: #{enume(abaj)}"
               num = enume(arri)
               #puts "Caso a analizar:"
               denom = enume(abaj)
@@ -356,7 +360,6 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
       end
     end
   end
-###################################################################
 end
 
 def totalProb(query, pdis)#[+G,-S,+R]
@@ -472,59 +475,43 @@ def chain_rule(string) #Correct!!!!!!
     end
   end
 #puts "Lo nuevo que tengo es: #{nuevo}"
-  #nuevo es un arreglo con los nodos ordenados por cantidad de padres
   s = nuevo.join(",") #Obtengo +G,+S,-R
   s.sub!(",", "|") #Obtengo +G|+S,-R
   arr = s.split("|") #Obtengo ["+G","+S,-R"]
-  #complete = arr.join(',').split(',')
   nuevo.each do |nu|
     Nodes.each do |n|
-      #puts "Vamos bien: #{arr}"
       if n.get_Name == nu.gsub(/\+/,'').gsub(/-/,'')
-        #puts "Con este empiezo: #{arr}"
+        #puts "Los nombres de mis nodos a analizar son: #{n.get_Name}"
         if arr.length > 1 && n.get_Parents.length != 0
-          #puts "Debo aparecer dos veces"
-          #puts "Voy a querer obtener el nodo: #{n.get_Name} con signo #{nu[0]} y joints #{arr[1]}"
           if n.search_Prob(nu[0], arr[1]) != false
-            #puts "Buscando: #{n.get_Name} con signo #{nu[0]} y joints: #{arr[1]}"
             prod *= n.search_Prob(nu[0], arr[1])
-            arr = arr.drop(1) #Obtengo [+S -R]
+            arr = arr.drop(1) 
             arr = arr.join(",").split(",")
           else
-            #puts "Inicial: #{arr}"
+            #arr -- ["+Alarm", "+JohnCalls,+Burglary,+Earthquake"]
             temp = arr.dup
+            #Deleting the root node from the temporal array -- ["+JohnCalls,+Burglary,+Earthquake"]
             temp.reject!{|b| b.include?(n.name)}
+            #Rearrange the array so that each element is on one position -- ["+JohnCalls" , "+Burglary" , "+Earthquake"]
             temp = temp.join(',').split(',')
-            #puts "vamos bien?: #{temp}"
+            #Redifine array by deleting the unwanted nodes -- ["+Burglary" , "+Earthquake"]
             temp = verify_Antecesors(n.get_Name, temp, nuevo) 
+            #puts "Para mi nodo: #{n.get_Name} mis antecesores son: #{temp}"
+            #puts "La probabilidad de mi nodo: #{n.get_Name} query: #{temp} es: #{n.search_Prob(nu[0], temp.join(','))}"
             prod *= n.search_Prob(nu[0], temp.join(','))
-            #puts "Por favooooor: #{prod}"
-            #puts "Tengo en temp: #{temp} y en array: #{arr}"
-            arr = arr.drop(1) #Obtengo [+S -R]
-            #puts "Ahora tengo: #{arr}"
+            #Delete array first element of arr -- ["+JohnCalls,+Burglary,+Earthquake"]
+            arr = arr.drop(1) 
+            #Obtain a two element array to know which node will be analyzed next ["+JohnCalls" , "+Burglary,+Earthquake"]
             arr = arr.join(",").sub!(",", "|").split("|")
-            #puts "Nuevo: #{arr}"
           end
-          #prod *= n.search_Prob(nu[0], arr[1])
-          #puts "Product: #{prod}"
-          #puts "Probabilidad de: #{prod} cuando debería de ser 0.9*0.4*0.8"
-          #arr = arr.drop(1) #Obtengo [+S -R]
-          #arr = arr.join(",").split(",")
-          #puts "El arreglo es: #{arr}"
-          #puts "Hasta ahorita #{arr.join(",").sub!(",", "|").split("|")}"
         else
-          #puts "Debo aparecer una vez"
-          #puts "Lo que tengo hasta ahorita: #{arr}"
           t = arr[0].gsub(/\+/,'').gsub(/-/,'')
-          #puts "Lo que le paso a total es: #{t} y como segundo: #{arr.join(",")}"
+          #puts "La probabilidad de mi nodo: #{n.get_Name} es: #{totalProb(Array[t], arr.join(","))}"
           prod *= totalProb(Array[t], arr.join(","))
-          #puts "Product: #{prod}"
           if arr.length > 1
             arr = arr.drop(1) #Obtengo [+S -R]
             arr = arr.join(",").split(",")
           end
-          #puts "A ver que tengo: #{totalProb(Array["Rain"], "-Rain")}"
-          #puts "Tu me das: #{totalProb(Array[t], arr.join(","))}"
         end
       end
     end
