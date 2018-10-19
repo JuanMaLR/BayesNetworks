@@ -238,9 +238,18 @@ def verify_Antecesors (node_name, arr)
     end
   end
   #puts "Hasta ahora amigos tenemos como arreglo principal: #{arr} y como arreglo temporal: #{temp}, cuya resta da #{arr-temp}"
-  arr.delete((arr - temp).join(","))
-  arr.push(node_name)
-  #puts "Nuevo: #{arr}"
+  nuev = []
+  temp.each do |t|
+    #puts "Verifica si funciona: #{arr.join(',').include? t}"
+    #temp.reject!{|b| root.push(b).uniq!; b.include?(n.name)} #Delete the root node
+    if arr.join(',').include? t
+      nuev.push(arr.select{|ele| ele.include? t})
+    end
+  end
+  arr = nuev.join(',').split(',')
+  #puts "arr: #{arr}"
+  arr
+  #arr.push(node_name)
 end
 
 def set_CPT(prob,number)
@@ -465,11 +474,27 @@ def chain_rule(string) #Correct!!!!!!
         if arr.length > 1 && n.get_Parents.length != 0
           #puts "Debo aparecer dos veces"
           #puts "Voy a querer obtener el nodo: #{n.get_Name} con signo #{nu[0]} y joints #{arr[1]}"
-          prod *= n.search_Prob(nu[0], arr[1])
+          if n.search_Prob(nu[0], arr[1]) != false
+            prod *= n.search_Prob(nu[0], arr[1])
+            arr = arr.drop(1) #Obtengo [+S -R]
+            arr = arr.join(",").split(",")
+          else
+            temp = arr.dup
+            temp.reject!{|b| b.include?(n.name)}
+            temp = temp.join(',').split(',')
+            temp = verify_Antecesors(n.get_Name, temp)
+            prod *= n.search_Prob(nu[0], temp.join(','))
+            #puts "Por favooooor: #{prod}"
+            #puts "Tengo en temp: #{temp} y en array: #{arr}"
+            arr = arr.drop(1) #Obtengo [+S -R]
+            #puts "Ahora tengo: #{arr}"
+            arr = arr.join(",").split(",")
+          end
+          #prod *= n.search_Prob(nu[0], arr[1])
           #puts "Product: #{prod}"
           #puts "Probabilidad de: #{prod} cuando debería de ser 0.9*0.4*0.8"
-          arr = arr.drop(1) #Obtengo [+S -R]
-          arr = arr.join(",").split(",")
+          #arr = arr.drop(1) #Obtengo [+S -R]
+          #arr = arr.join(",").split(",")
           #puts "El arreglo es: #{arr}"
           #puts "Hasta ahorita #{arr.join(",").sub!(",", "|").split("|")}"
         else
