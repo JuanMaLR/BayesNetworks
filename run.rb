@@ -120,9 +120,9 @@ class Node
       if f
         if sign=='+'
           @prob[caso][0]=probability
-          @prob[caso][1]=1.0 -probability
+          @prob[caso][1]=(1.0 -probability).round(3)
         else
-          @prob[caso][0]=1.0 -probability
+          @prob[caso][0]=1.0 -(probability).round(3)
           @prob[caso][1]=probability
         end
       end
@@ -497,7 +497,7 @@ def chain_rule(string) #Correct!!!!!!
             #Redifine array by deleting the unwanted nodes -- ["+Burglary" , "+Earthquake"]
             temp = verify_Antecesors(n.get_Name, temp, nuevo) 
             #puts "Para mi nodo: #{n.get_Name} mis antecesores son: #{temp}"
-            #puts "La probabilidad de mi nodo: #{n.get_Name} query: #{temp} es: #{n.search_Prob(nu[0], temp.join(','))}"
+            #puts "La probabilidad de mi nodo: #{n.get_Name} con signo: #{nu[0]} y joint: #{temp.join(',')} es: #{n.search_Prob(nu[0], temp.join(','))}"
             prod *= n.search_Prob(nu[0], temp.join(','))
             #Delete array first element of arr -- ["+JohnCalls,+Burglary,+Earthquake"]
             arr = arr.drop(1) 
