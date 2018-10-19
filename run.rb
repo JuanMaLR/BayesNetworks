@@ -237,7 +237,7 @@ def verify_Antecesors (node_name, arr)
       end
     end
   end
-  #puts "Hasta ahora amigos tenemos como arreglo principal: #{arr} y como arreglo temporal: #{temp}, cuya resta da #{arr-temp}"
+  puts "Hasta ahora amigos tenemos como arreglo principal: #{arr} y como arreglo temporal: #{temp}, cuya resta da #{arr-temp}"
   nuev = []
   temp.each do |t|
     #puts "Verifica si funciona: #{arr.join(',').include? t}"
@@ -247,7 +247,7 @@ def verify_Antecesors (node_name, arr)
     end
   end
   arr = nuev.join(',').split(',')
-  #puts "arr: #{arr}"
+  puts "arr: #{arr}"
   arr
   #arr.push(node_name)
 end
@@ -471,24 +471,29 @@ def chain_rule(string) #Correct!!!!!!
     Nodes.each do |n|
       #puts "Vamos bien: #{arr}"
       if n.get_Name == nu.gsub(/\+/,'').gsub(/-/,'')
+        #puts "Con este empiezo: #{arr}"
         if arr.length > 1 && n.get_Parents.length != 0
           #puts "Debo aparecer dos veces"
           #puts "Voy a querer obtener el nodo: #{n.get_Name} con signo #{nu[0]} y joints #{arr[1]}"
           if n.search_Prob(nu[0], arr[1]) != false
+            #puts "Buscando: #{n.get_Name} con signo #{nu[0]} y joints: #{arr[1]}"
             prod *= n.search_Prob(nu[0], arr[1])
             arr = arr.drop(1) #Obtengo [+S -R]
             arr = arr.join(",").split(",")
           else
+            puts "Inicial: #{arr}"
             temp = arr.dup
             temp.reject!{|b| b.include?(n.name)}
             temp = temp.join(',').split(',')
+            puts "vamos bien?: #{temp}"
             temp = verify_Antecesors(n.get_Name, temp)
             prod *= n.search_Prob(nu[0], temp.join(','))
             #puts "Por favooooor: #{prod}"
             #puts "Tengo en temp: #{temp} y en array: #{arr}"
             arr = arr.drop(1) #Obtengo [+S -R]
             #puts "Ahora tengo: #{arr}"
-            arr = arr.join(",").split(",")
+            arr = arr.join(",").sub!(",", "|").split("|")
+            puts "Nuevo: #{arr}"
           end
           #prod *= n.search_Prob(nu[0], arr[1])
           #puts "Product: #{prod}"
