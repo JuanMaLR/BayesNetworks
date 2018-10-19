@@ -224,7 +224,12 @@ def get_antecesors(node_name, ret_arr)
   end
 end
 
-def verify_Antecesors (node_name, arr)
+=begin
+@param {string} node_name - Name of the node -- Sprinkler
+@param {array} arr - Array (without roor) with nodes ordered respect to their parents to be verified if they're dependent or not -- ["-Grasswet", "+Sprinkler", "-Rain"]
+@param {array} pdis - Array with all nodes to be considered with sign (not ordered) -- ["+Sprinkler", "-Rain"]
+=end
+def verify_Antecesors (node_name, arr, pdis)
   #puts "El nombre de mi nodo es: #{node_name} y mi arreglo es: #{arr}"
   temp = []
   Nodes.each do |n|
@@ -232,22 +237,26 @@ def verify_Antecesors (node_name, arr)
       if n.get_Parents.length != arr.length
         #puts "Longitud de mis padres: #{n.get_Parents.length} y de mi arreglo: #{arr.length}"
         n.get_Parents.each do |p|
+          #Get all the parents without sing from the root node (node_name)
           temp.push(p.get_Name)
         end
       end
     end
   end
-  puts "Hasta ahora amigos tenemos como arreglo principal: #{arr} y como arreglo temporal: #{temp}, cuya resta da #{arr-temp}"
+  #puts "Hasta ahora amigos tenemos como arreglo principal: #{arr} y como arreglo temporal: #{temp}, cuya resta da #{arr-temp}"
   nuev = []
+  #For each parent node
   temp.each do |t|
     #puts "Verifica si funciona: #{arr.join(',').include? t}"
     #temp.reject!{|b| root.push(b).uniq!; b.include?(n.name)} #Delete the root node
-    if arr.join(',').include? t
-      nuev.push(arr.select{|ele| ele.include? t})
+    #Check if the array includes already the name of the parent node
+    if pdis.join(',').include? t 
+      #If it includes it (ignoring the sign) then add that node (with sign) to the new array (nuev)
+      nuev.push(pdis.select{|ele| ele.include? t})
     end
   end
   arr = nuev.join(',').split(',')
-  puts "arr: #{arr}"
+  #puts "arr: #{arr}"
   arr
   #arr.push(node_name)
 end
@@ -313,7 +322,7 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
               #puts "Arriba: #{arri}, abajo: #{abaj}"
               #puts "Numerator: #{enume(arri)}"
               num = enume(arri)
-              puts "Caso a analizar:"
+              #puts "Caso a analizar:"
               denom = enume(abaj)
               return num/denom
             end
@@ -467,6 +476,7 @@ def chain_rule(string) #Correct!!!!!!
   s = nuevo.join(",") #Obtengo +G,+S,-R
   s.sub!(",", "|") #Obtengo +G|+S,-R
   arr = s.split("|") #Obtengo ["+G","+S,-R"]
+  #complete = arr.join(',').split(',')
   nuevo.each do |nu|
     Nodes.each do |n|
       #puts "Vamos bien: #{arr}"
@@ -481,19 +491,19 @@ def chain_rule(string) #Correct!!!!!!
             arr = arr.drop(1) #Obtengo [+S -R]
             arr = arr.join(",").split(",")
           else
-            puts "Inicial: #{arr}"
+            #puts "Inicial: #{arr}"
             temp = arr.dup
             temp.reject!{|b| b.include?(n.name)}
             temp = temp.join(',').split(',')
-            puts "vamos bien?: #{temp}"
-            temp = verify_Antecesors(n.get_Name, temp)
+            #puts "vamos bien?: #{temp}"
+            temp = verify_Antecesors(n.get_Name, temp, nuevo) 
             prod *= n.search_Prob(nu[0], temp.join(','))
             #puts "Por favooooor: #{prod}"
             #puts "Tengo en temp: #{temp} y en array: #{arr}"
             arr = arr.drop(1) #Obtengo [+S -R]
             #puts "Ahora tengo: #{arr}"
             arr = arr.join(",").sub!(",", "|").split("|")
-            puts "Nuevo: #{arr}"
+            #puts "Nuevo: #{arr}"
           end
           #prod *= n.search_Prob(nu[0], arr[1])
           #puts "Product: #{prod}"
