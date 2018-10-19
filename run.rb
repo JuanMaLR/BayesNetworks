@@ -350,7 +350,7 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
           return n.search_Prob(sign,"")
         else
           get_antecesors(node_Name, ant)
-          verify_Antecesors(node_Name, ant)
+          verify_Antecesors(node_Name, ant, pdis)
           return totalProb(ant, pdis)
         end
       end
