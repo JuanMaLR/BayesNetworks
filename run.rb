@@ -319,7 +319,7 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
             if search[1].split(',').length == 1
               num = enume(pdis); 
               denom = enume(prob.split('|')[1].split(',')); 
-              return num/denom 
+              return (num/denom).round(7)
             else
               arri = search.join(',').split(",")
               abaj = search[1].split(",")
@@ -328,7 +328,7 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
               num = enume(arri)
               #puts "Caso a analizar:"
               denom = enume(abaj)
-              return num/denom
+              return (num/denom).round(7)
             end
           end
         end
@@ -338,7 +338,7 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
       arri = search.join(',').split(",")
       abaj = search[1].split(",")
       #puts "Arriba: #{arri}, abajo: #{abaj}"
-      return enume(arri)/enume(abaj)
+      return (enume(arri)/enume(abaj)).round(7)
     end
   else
     #It is not a given
@@ -351,11 +351,11 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
       #If we have a match
       if n.get_Name == node_Name
         if n.search_Prob(sign,"") != false
-          return n.search_Prob(sign,"")
+          return (n.search_Prob(sign,"")).round(7)
         else
           get_antecesors(node_Name, ant)
           verify_Antecesors(node_Name, ant, pdis)
-          return totalProb(ant, pdis)
+          return (totalProb(ant, pdis)).round(7)
         end
       end
     end
