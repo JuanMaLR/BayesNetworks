@@ -321,7 +321,7 @@ def get_Probability(prob, pdis) #In the form +G|-R,+S
               denom = enume(prob.split('|')[1].split(',')); 
               return num/denom 
             else
-              arri = search[0].split(",")
+              arri = search.join(',').split(",")
               abaj = search[1].split(",")
               #puts "Arriba: #{arri}, abajo: #{abaj}"
               #puts "Denominator: #{enume(abaj)}"
